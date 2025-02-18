@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator & Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #2c3e50, #000000);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .container {
+            max-width: 450px;
+            margin: auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+        }
+        button {
+            background-color: #ffcc00;
+            color: black;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #e6b800;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            background: #2c3e50;
+            color: white;
+        }
+        input::placeholder {
+            color: #bdc3c7;
+        }
+        #qr-code {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+        }
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+        .action-buttons button {
+            margin: 10px 0;
+            background-color: #1abc9c;
+        }
+
+        /* FAQ Section Styles */
+        #faq {
+            margin-top: 40px;
+            color: white;
+        }
+
+        #faq h2 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .faq-item {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .faq-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffcc00;
+        }
+
+        .faq-answer {
+            font-size: 1rem;
+            color: #bdc3c7;
+            margin-top: 8px;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>QR Code Tool</h1>
+
+    <!-- Home Page -->
+    <div class="container" id="home">
+        <button onclick="showGenerator()">Generate QR Code</button>
+        <button onclick="showScanner()">Scan QR Code</button>
+    </div>
+
+    <!-- QR Code Generator -->
+    <div class="container hidden" id="generator">
+        <input type="text" id="qr-input" placeholder="Enter text or URL">
+        <button onclick="generateQR()">Generate</button>
+        <div id="qr-code"></div>
+        <button onclick="downloadQR()" id="download-btn" class="hidden">Download QR Code</button>
+        <button onclick="clearGeneratedQR()" id="new-qr-btn" class="hidden">New QR</button>
+        <button onclick="resetGenerator(); showHome();">Back</button>
+    </div>
+
+    <!-- QR Code Scanner -->
+    <div class="container hidden" id="scanner">
+        <div id="reader"></div>
+        <input type="file" accept="image/*" id="qr-file" onchange="scanFile()">
+        <p id="qr-result"></p>
+        <div id="action-buttons" class="action-buttons hidden">
+            <button id="go-to-site" class="hidden" onclick="window.open('', '_blank')">Go to Site</button>
+            <button id="connect-wifi" class="hidden">Connect to Wi-Fi</button>
+            <button id="copy-password" class="hidden" onclick="copyPassword()">Copy Password</button>
+            <button id="copy-code" class="hidden" onclick="copyText()">Copy Code</button>
+        </div>
+        <button onclick="clearScannedQR()" id="new-scan-btn" class="hidden">New Scan</button>
+        <button onclick="resetScanner(); showHome();">Back</button>
+    </div>
+
+   <!-- FAQ Section -->
+<div class="container" id="faq">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item">
+        <h3 class="faq-question">What is a QR Code?</h3>
+        <p class="faq-answer">A QR code is a type of matrix barcode (or two-dimensional barcode) that contains information such as a URL, text, or other data that can be quickly scanned by mobile devices.</p>
+    </div>
+    <div class="faq-item">
+        <h3 class="faq-question">How do I generate a QR Code?</h3>
+        <p class="faq-answer">Simply enter the text or URL you want to encode into the QR code in the input box, then click "Generate". Your QR code will be displayed immediately.</p>
+    </div>
+    <div class="faq-item">
+        <h3 class="faq-question">How do I scan a QR Code?</h3>
+        <p class="faq-answer">To scan a QR code, click on the "Scan QR Code" button, grant camera access, and align the QR code within the scan area. Alternatively, you can upload an image file with a QR code for scanning.</p>
+    </div>
+    <div class="faq-item">
+        <h3 class="faq-question">Can I download the QR Code?</h3>
+        <p class="faq-answer">Yes, once you generate the QR code, you can download it as an image file by clicking the "Download QR Code" button.</p>
+    </div>
+    <div class="faq-item">
+        <h3 class="faq-question">Why is my QR scanner not working?</h3>
+        <p class="faq-answer">Make sure to grant camera access for the QR scanner to work properly. If your browser blocks camera access, go to settings and allow camera permissions.</p>
+    </div>
+    <div class="faq-item">
+        <h3 class="faq-question">Where can I download the QR Code scanner app?</h3>
+        <p class="faq-answer">If you prefer an app for scanning QR codes, <a href="https://example.com/download" target="_blank" style="color: #ffcc00;">click here to download</a>.</p>
+    </div>
+</div>
+
+
+    <footer>
+        &copy; 2025 All rights reserved.
+    </footer>
+
+    <script>
+        let html5QrCode;
+
+        // Home Page Navigation
+        function showGenerator() {
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('generator').classList.remove('hidden');
+        }
+
+        function showScanner() {
+            document.getElementById('home').classList.add('hidden');
+            document.getElementById('scanner').classList.remove('hidden');
+            startScanner();
+        }
+
+        function showHome() {
+            document.querySelectorAll('.container').forEach(el => {
+                if (el.id !== 'faq') { // Keep the FAQ section visible
+                    el.classList.add('hidden');
+                }
+            });
+            document.getElementById('home').classList.remove('hidden');
+        }
+
+        // QR Code Generator Functions
+        function generateQR() {
+            let input = document.getElementById("qr-input").value;
+            if (input) {
+                document.getElementById("qr-code").innerHTML = "";
+                new QRCode(document.getElementById("qr-code"), input);
+                document.getElementById("download-btn").classList.remove("hidden");
+                document.getElementById("new-qr-btn").classList.remove("hidden");
+            }
+        }
+
+        function clearGeneratedQR() {
+            document.getElementById("qr-input").value = "";
+            document.getElementById("qr-code").innerHTML = "";
+            document.getElementById("download-btn").classList.add("hidden");
+            document.getElementById("new-qr-btn").classList.add("hidden");
+        }
+
+        function downloadQR() {
+            let canvas = document.querySelector("canvas");
+            let url = canvas.toDataURL("image/png");
+            let link = document.createElement("a");
+            link.href = url;
+            link.download = "qr_code.png";
+            link.click();
+        }
+
+        function resetGenerator() {
+            document.getElementById("qr-input").value = "";
+            document.getElementById("qr-code").innerHTML = "";
+            document.getElementById("download-btn").classList.add("hidden");
+            document.getElementById("new-qr-btn").classList.add("hidden");
+        }
+
+        // QR Code Scanner Functions
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" }, // using the back camera
+                {
+                    fps: 10,    // frame per second for scanning
+                    qrbox: 250  // scanning area size
+                },
+                (decodedText) => handleScanResult(decodedText),
+                (errorMessage) => {
+                    console.log(errorMessage);
+                }
+            ).catch((err) => {
+                console.error("Error starting the camera:", err);
+                alert("Unable to start camera. Please check your permissions or try again later.");
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    console.log("Camera stopped.");
+                }).catch((err) => {
+                    console.log("Error stopping the camera:", err);
+                });
+            }
+        }
+
+        function handleScanResult(decodedText) {
+            document.getElementById("qr-result").innerText = "Scanned: " + decodedText;
+            showActionButtons(decodedText);
+            document.getElementById("new-scan-btn").classList.remove("hidden"); // Show "New Scan" button
+            stopScanner(); // Stop the camera after scanning
+        }
+
+        function showActionButtons(decodedText) {
+            const actionButtons = document.getElementById("action-buttons");
+            actionButtons.classList.remove("hidden");
+
+            if (decodedText.startsWith("http")) {
+                document.getElementById("go-to-site").classList.remove("hidden");
+                document.getElementById("go-to-site").onclick = function() {
+                    window.open(decodedText, '_blank');
+                };
+                document.getElementById("connect-wifi").classList.add("hidden");
+                document.getElementById("copy-password").classList.add("hidden");
+                document.getElementById("copy-code").classList.add("hidden");
+            } else if (decodedText.startsWith("WIFI:")) {
+                const wifiInfo = decodedText.substring(5);
+                const wifiParts = wifiInfo.split(';');
+                let password = wifiParts.find(part => part.startsWith('P:')).split(':')[1];
+                document.getElementById("copy-password").classList.remove("hidden");
+                document.getElementById("copy-password").onclick = function() {
+                    copyPassword(password);
+                };
+                document.getElementById("copy-code").classList.add("hidden");
+                document.getElementById("go-to-site").classList.add("hidden");
+            }
+        }
+
+        function clearScannedQR() {
+            document.getElementById("qr-result").innerText = "";
+            document.getElementById("new-scan-btn").classList.add("hidden");
+            document.getElementById("action-buttons").classList.add("hidden");
+            startScanner(); // Restart the scanner after clearing the result
+        }
+
+        function resetScanner() {
+            document.getElementById("qr-file").value = "";
+            document.getElementById("qr-result").innerText = "";
+            stopScanner();
+        }
+
+        // Function to scan uploaded image file
+        function scanFile() {
+            const file = document.getElementById("qr-file").files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+                        
+                        if (qrCode) {
+                            document.getElementById("qr-result").innerText = "Scanned: " + qrCode.data;
+                            showActionButtons(qrCode.data);
+                            document.getElementById("new-scan-btn").classList.remove("hidden");
+                        } else {
+                            document.getElementById("qr-result").innerText = "No QR code found in the image.";
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function copyPassword(password) {
+            navigator.clipboard.writeText(password);
+            alert("Password copied!");
+        }
+
+        function copyText() {
+            let text = document.getElementById("qr-result").innerText;
+            navigator.clipboard.writeText(text);
+            alert("Code copied!");
+        }
+    </script>
+</body>
+</html>
